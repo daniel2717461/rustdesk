@@ -205,7 +205,7 @@ exclude = ["vdi/host", "examples/custom_plugin"]
 LegalCopyright = "Copyright © 2025 Purslane Ltd. All rights reserved."
 ProductName = "RustDesk"
 FileDescription = "RustDesk Remote Desktop"
-OriginalFilename = "rustdesk.exe"
+OriginalFilename = "RustDesk.exe"
 
 [target.'cfg(target_os="windows")'.build-dependencies]
 winres = "0.1"
