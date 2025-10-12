@@ -82,7 +82,7 @@ class DesktopSettingPage extends StatefulWidget {
     //     bind.mainGetBuildinOption(key: kOptionHideRemotePrinterSetting) != 'Y')
     //   SettingsTabKey.printer,
     //关于设置
-    SettingsTabKey.about,
+    // SettingsTabKey.about,
   ];
 
   DesktopSettingPage({Key? key, required this.initialTabkey}) : super(key: key);
