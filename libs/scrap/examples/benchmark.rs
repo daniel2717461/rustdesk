@@ -90,11 +90,11 @@ fn test_vpx(
     i444: bool,
 ) {
     let config = EncoderCfg::VPX(VpxEncoderConfig {
-        width: display_width,
-        height: display_height,
-        quality: 0.8, // 质量系数 0.0-1.0
-        codec: HwVideoCodecId::H264,
-        keyframe_interval: Some(240), // 关键帧间
+        width: width as _,
+        height: height as _,
+        quality,
+        codec: codec_id,
+        keyframe_interval: None,
     });
     let mut encoder = VpxEncoder::new(config, i444).unwrap();
     let mut vpxs = vec![];
