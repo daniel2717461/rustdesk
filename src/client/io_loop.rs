@@ -1164,9 +1164,9 @@ impl<T: InvokeUiSession> Remote<T> {
             return;
         };
         let mut limited_fps = if direct {
-            min_decode_fps * 9 / 10 // 30 got 27
+            min_decode_fps * 11 / 10 // 游戏模式下更宽松的限制，30得到33
         } else {
-            min_decode_fps * 4 / 5 // 30 got 24
+            min_decode_fps * 9 / 10 // 游戏模式下更宽松的限制，30得到27
         };
         if limited_fps > custom_fps {
             limited_fps = custom_fps;
@@ -2304,7 +2304,13 @@ impl<T: InvokeUiSession> Remote<T> {
     }
 
     fn new_video_thread(&mut self, display: usize) {
-        let video_queue = Arc::new(RwLock::new(ArrayQueue::new(client::VIDEO_QUEUE_SIZE)));
+        // 根据游戏模式选择队列大小
+        let queue_size = if self.is_gaming_mode() {
+            client::VIDEO_QUEUE_SIZE_GAMING
+        } else {
+            client::VIDEO_QUEUE_SIZE_DEFAULT
+        };
+        let video_queue = Arc::new(RwLock::new(ArrayQueue::new(queue_size)));
         let (video_sender, video_receiver) = std::sync::mpsc::channel::<MediaData>();
         let decode_fps = Arc::new(RwLock::new(None));
         let frame_count = Arc::new(RwLock::new(0));
@@ -2426,5 +2432,16 @@ impl Drop for VideoThread {
     fn drop(&mut self) {
         // since channels are buffered, messages sent before the disconnect will still be properly received.
         *self.discard_queue.write().unwrap() = true;
+    }
+}
+
+impl<T: InvokeUiSession> Remote<T> {
+    // ... 现有代码 ...
+
+    // 添加游戏模式检测方法
+    fn is_gaming_mode(&self) -> bool {
+        // 检查本地配置是否启用了游戏模式
+        let config = self.handler.lc.read().unwrap();
+        config.enable_gaming_mode.unwrap_or(false)
     }
 }
