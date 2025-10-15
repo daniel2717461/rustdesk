@@ -1,11 +1,11 @@
 [package]
-name = "微益智"
+name = "rustdesk"
 version = "1.4.2"
 authors = ["微益智 <daniel_cn@qq.com>"]
 edition = "2021"
 build= "build.rs"
 description = "微益智 Remote Desktop"
-default-run = "微益智"
+default-run = "rustdesk"
 rust-version = "1.75"
 
 [lib]
