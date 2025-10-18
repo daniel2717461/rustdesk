@@ -14,7 +14,7 @@ from pathlib import Path
 windows = platform.platform().startswith('Windows')
 osx = platform.platform().startswith(
     'Darwin') or platform.platform().startswith("macOS")
-hbb_name = 'rustdesk' + ('.exe' if windows else '')
+hbb_name = 'wyzdesk' + ('.exe' if windows else '')
 exe_path = 'target/release/' + hbb_name
 if windows:
     flutter_build_dir = 'build/windows/x64/runner/Release/'
@@ -497,7 +497,7 @@ def main():
             return
         system2('cargo build --release --features ' + features)
         # system2('upx.exe target/release/rustdesk.exe')
-        system2('mv target/release/rustdesk.exe target/release/RustDesk.exe')
+        system2('mv target/release/rustdesk.exe target/release/WyzDesk.exe')
         pa = os.environ.get('P')
         if pa:
             # https://certera.com/kb/tutorial-guide-for-safenet-authentication-client-for-code-signing/
