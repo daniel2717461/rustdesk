@@ -1,6 +1,4 @@
-﻿<!--
-This file contains the declaration of all the localizable strings.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <WixLocalization Culture="en-us" Codepage="1252"
 	xmlns="http://wixtoolset.org/schemas/v4/wxl">
 
@@ -10,13 +8,13 @@ This file contains the declaration of all the localizable strings.
 	<!-- General strings -->
 	<String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
 
-	<String Id="AR_Comment" Value="RustDesk" />
+	<String Id="AR_Comment" Value="WyzDesk" />
 
-	<String Id="F_App" Value="RustDesk" />
-	<String Id="F_App_Desc" Value="RustDesk - Main programs installations." />
+	<String Id="F_App" Value="WyzDesk" />
+	<String Id="F_App_Desc" Value="WyzDesk - Main programs installations." />
 
-	<String Id="SC_Uninstall" Value="Uninstall RustDesk" />
-	<String Id="SC_Uninstall_Desc" Value="Removes RustDesk or parts of it from the computer" />
+	<String Id="SC_Uninstall" Value="Uninstall WyzDesk" />
+	<String Id="SC_Uninstall_Desc" Value="Removes WyzDesk or parts of it from the computer" />
 
 	<!-- Client related strings -->
 	<String Id="F_Client" Value="Client" />
@@ -26,20 +24,20 @@ This file contains the declaration of all the localizable strings.
 	<String Id="F_LAVFilters" Value="LAV Filters" />
 	<String Id="F_LAVFilters_Desc" Value="Recommended directshow filters for best audio and video playback experience." />
 
-	<String Id="SC_Client" Value="RustDesk" />
-	<String Id="SC_Client_Desc" Value="Start RustDesk." />
+	<String Id="SC_Client" Value="WyzDesk" />
+	<String Id="SC_Client_Desc" Value="Start WyzDesk." />
 
-	<String Id="SC_Client_Tray" Value="RustDesk Tray" />
-	<String Id="SC_Client_Tray_Desc" Value="Start RustDesk tray." />
+	<String Id="SC_Client_Tray" Value="WyzDesk Tray" />
+	<String Id="SC_Client_Tray_Desc" Value="Start WyzDesk tray." />
 
 	<!-- Server related strings -->
 	<String Id="F_Server" Value="Server" />
-	<String Id="F_Server_Desc" Value="The server part of RustDesk. Provides the MediaLibrary and other services." />
+	<String Id="F_Server_Desc" Value="The server part of WyzDesk. Provides the MediaLibrary and other services." />
 	<String Id="F_Server_Plugins" Value="Plugins" />
 	<String Id="F_Server_Plugins_Desc" Value="Plugins for the server." />
 
-	<String Id="Service_DisplayName" Value="RustDesk Service" />
-	<String Id="Service_Description" Value="This service runs the RustDesk Server." />
+	<String Id="Service_DisplayName" Value="WyzDesk Service" />
+	<String Id="Service_Description" Value="This service runs the WyzDesk Server." />
 
 	<!-- Launch Conditions -->
 	<String Id="LC_OS" Value="[ProductName] requires minimum Windows 7 / 2008 R2 as operating system." />
@@ -51,6 +49,6 @@ This file contains the declaration of all the localizable strings.
 
 	<String Id="MyInstallDirDlgDesktopShortcuts" Value="Create desktop icon" />
 	<String Id="MyInstallDirDlgStartMenuShortcuts" Value="Create start menu shortcuts" />
-	<String Id="MyInstallDirDlgPrinter" Value="Install RustDesk Printer" />
+	<String Id="MyInstallDirDlgPrinter" Value="Install WyzDesk Printer" />
 
 </WixLocalization>
