@@ -29,9 +29,9 @@ delay:
 
 // Constants
 pub const FPS: u32 = 45;
-pub const MIN_FPS: u32 = 5;
+pub const MIN_FPS: u32 = 1;
 pub const MAX_FPS: u32 = 120;
-pub const INIT_FPS: u32 = 25;
+pub const INIT_FPS: u32 = 15;
 
 // Bitrate ratio constants for different quality levels
 const BR_MAX: f32 = 40.0; // 2000 * 2 / 100
@@ -249,11 +249,11 @@ impl VideoQoS {
 
         // For bad network, small fps means quick reaction and high quality
         let (min_fps, normal_fps) = if target_ratio >= BR_BEST {
-            (20, 35)
+            (8, 16)
         } else if target_ratio >= BR_BALANCED {
-            (25, 40)
+            (10, 20)
         } else {
-            (30, 45)
+            (12, 24)
         };
 
         // Calculate minimum acceptable delay-fps product
@@ -269,16 +269,16 @@ impl VideoQoS {
             let mut fps = self.fps;
 
             // Adaptive FPS adjustment based on network delay:
-            if avg_delay < 30 {
+            if avg_delay < 50 {
                 user.delay.quick_increase_fps_count += 1;
-                let mut step = if fps < normal_fps { 2 } else { 0 };
-                if user.delay.quick_increase_fps_count >= 2 {
-                    // After 2 consecutive good samples, increase more aggressively for 45fps
+                let mut step = if fps < normal_fps { 1 } else { 0 };
+                if user.delay.quick_increase_fps_count >= 3 {
+                    // After 3 consecutive good samples, increase more aggressively
                     user.delay.quick_increase_fps_count = 0;
-                    step = 8;
+                    step = 5;
                 }
                 fps = min_fps.max(fps + step);
-            } else if avg_delay < 70 {
+            } else if avg_delay < 100 {
                 let step = if avg_delay < old_avg_delay {
                     if fps < normal_fps {
                         1
@@ -294,11 +294,11 @@ impl VideoQoS {
             } else {
                 let devide_fps = ((fps as f32) / (avg_delay as f32 / DELAY_THRESHOLD_150MS as f32))
                     .ceil() as u32;
-                if avg_delay < 180 {
+                if avg_delay < 200 {
                     fps = min_fps.max(devide_fps);
-                } else if avg_delay < 250 {
+                } else if avg_delay < 300 {
                     fps = min_fps.min(devide_fps);
-                } else if avg_delay < 500 {
+                } else if avg_delay < 600 {
                     fps = dividend_ms / avg_delay;
                 } else {
                     fps = (dividend_ms / avg_delay).min(devide_fps);
@@ -470,27 +470,27 @@ impl VideoQoS {
 
         let mut v = current_ratio;
 
-        // Adjust ratio based on network delay thresholds for 45fps optimization
-        if max_delay < 40 {
+        // Adjust ratio based on network delay thresholds
+        if max_delay < 50 {
             if dynamic_screen {
-                v = current_ratio * 1.25; // Increase more aggressively for 45fps
+                v = current_ratio * 1.15;
             }
-        } else if max_delay < 80 {
+        } else if max_delay < 100 {
             if dynamic_screen {
-                v = current_ratio * 1.15; // Increase more aggressively for 45fps
+                v = current_ratio * 1.1;
             }
         } else if max_delay < DELAY_THRESHOLD_150MS {
             if dynamic_screen {
-                v = current_ratio * 1.1; // More responsive to dynamic screen changes
+                v = current_ratio * 1.05;
             }
-        } else if max_delay < 180 {
-            v = current_ratio * 0.9; // Less aggressive reduction
-        } else if max_delay < 250 {
-            v = current_ratio * 0.85; // Less aggressive reduction
-        } else if max_delay < 400 {
-            v = current_ratio * 0.8; // Less aggressive reduction
+        } else if max_delay < 200 {
+            v = current_ratio * 0.95;
+        } else if max_delay < 300 {
+            v = current_ratio * 0.9;
+        } else if max_delay < 500 {
+            v = current_ratio * 0.85;
         } else {
-            v = current_ratio * 0.7; // Less aggressive reduction
+            v = current_ratio * 0.8;
         }
 
         // Limit quality increase rate for better stability

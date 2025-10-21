@@ -70,6 +70,13 @@ impl KcpStream {
         timeout: std::time::Duration,
     ) -> ResultType<(Self, Stream)> {
         let mut endpoint = KcpEndpoint::new();
+        // KCP优化参数：启用快速模式，降低延迟，提高传输效率
+        // 参数说明：
+        // - nodelay: 1 启用快速模式，0 不启用
+        // - interval: 10-50ms，内部更新间隔，越小越快但占用CPU
+        // - resend: 2-3，快速重传参数，2表示2次ACK确认就重传
+        // - nc: 1 启用拥塞控制，0 不启用        
+        endpoint.set_nodelay(1, 20, 2, 1);
         endpoint.run().await;
 
         let (input, output) = (
