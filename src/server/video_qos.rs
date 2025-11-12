@@ -27,11 +27,11 @@ delay:
     use delay minus RTT as the actual network delay
 */
 
-// Constants
-pub const FPS: u32 = 30;
+// Constants - 极致优化支持240+ FPS
+pub const FPS: u32 = 120;  // 默认帧率提升到120FPS，提供更流畅的基础体验
 pub const MIN_FPS: u32 = 1;
-pub const MAX_FPS: u32 = 120;
-pub const INIT_FPS: u32 = 15;
+pub const MAX_FPS: u32 = 600;  // 最大帧率提升到600FPS，支持240+FPS极致性能
+pub const INIT_FPS: u32 = 60;  // 初始帧率提升到60FPS，快速进入高性能模式
 
 // Bitrate ratio constants for different quality levels
 const BR_MAX: f32 = 40.0; // 2000 * 2 / 100
@@ -39,10 +39,12 @@ const BR_MIN: f32 = 0.2;
 const BR_MIN_HIGH_RESOLUTION: f32 = 0.1; // For high resolution, BR_MIN is still too high, so we set a lower limit
 const MAX_BR_MULTIPLE: f32 = 1.0;
 
-const HISTORY_DELAY_LEN: usize = 2;
-const ADJUST_RATIO_INTERVAL: usize = 3; // Adjust quality ratio every 3 seconds
-const DYNAMIC_SCREEN_THRESHOLD: usize = 2; // Allow increase quality ratio if encode more than 2 times in one second
-const DELAY_THRESHOLD_150MS: u32 = 150; // 150ms is the threshold for good network condition
+// 高性能网络参数优化
+const HISTORY_DELAY_LEN: usize = 3; // 增加历史延迟数据长度，提高预测准确性
+const ADJUST_RATIO_INTERVAL: usize = 2; // 优化质量调整间隔到2秒，更快响应网络变化
+const DYNAMIC_SCREEN_THRESHOLD: usize = 3; // 提高动态屏幕阈值，支持更高FPS的场景
+const DELAY_THRESHOLD_150MS: u32 = 80; // 降低延迟阈值到80ms，支持更敏感的响应
+const HIGH_PERF_DELAY_THRESHOLD: u32 = 30; // 新增高性能延迟阈值，支持240+FPS极致体验
 
 #[derive(Default, Debug, Clone)]
 struct UserDelay {

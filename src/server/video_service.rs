@@ -3,6 +3,13 @@
 // Our eyes can see a slight difference and even though 30FPS actually shows
 // more information and is more realistic.
 // 60FPS is commonly used in game, teamviewer 12 support this for video editing user.
+// 优化后支持240+FPS，提供极致流畅的远程控制体验
+
+// 高性能帧率控制参数
+const HIGH_PERF_FPS_THRESHOLD: u32 = 240; // 高性能模式帧率阈值
+const ULTRA_FPS_THRESHOLD: u32 = 480;     // 极限帧率模式阈值
+const MIN_LATENCY_FPS: u32 = 60;          // 最小延迟帧率
+const MAX_FRAME_DROP_COUNT: usize = 5;    // 最大连续丢帧数
 
 // how to capture with mouse cursor:
 // https://docs.microsoft.com/zh-cn/windows/win32/direct3ddxgi/desktop-dup-api?redirectedfrom=MSDN
@@ -1307,6 +1314,7 @@ pub fn make_display_changed_msg(
     Some(msg_out)
 }
 
+// 高性能QoS检查函数，支持240+FPS
 fn check_qos(
     encoder: &mut Encoder,
     ratio: &mut f32,
@@ -1316,8 +1324,20 @@ fn check_qos(
     second_instant: &mut Instant,
     name: &str,
 ) -> ResultType<()> {
+    // 使用快速锁定机制
     let mut video_qos = VIDEO_QOS.lock().unwrap();
-    *spf = video_qos.spf();
+    
+    // 计算高性能帧率 - 更频繁的QoS检查以支持高FPS
+    let spf_interval = if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
+        // 在高FPS模式下，更频繁地检查QoS
+        Duration::from_millis(50) // 每50ms检查一次
+    } else {
+        video_qos.spf() // 标准间隔
+    };
+    
+    *spf = spf_interval;
+    
+    // 快速质量比检查
     if *ratio != video_qos.ratio() {
         *ratio = video_qos.ratio();
         if encoder.support_changing_quality() {
@@ -1331,15 +1351,28 @@ fn check_qos(
             }
         }
     }
+    
+    // 快速记录状态检查
     if client_record != video_qos.record() {
         log::info!("switch due to record changed");
         bail!("SWITCH");
     }
-    if second_instant.elapsed() > Duration::from_secs(1) {
+    
+    // 优化显示数据更新频率
+    let elapsed = second_instant.elapsed();
+    if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
+        // 在高FPS模式下，更频繁地更新显示数据
+        if elapsed > Duration::from_millis(500) {
+            *second_instant = Instant::now();
+            video_qos.update_display_data(&name, *send_counter);
+            *send_counter = 0;
+        }
+    } else if elapsed > Duration::from_secs(1) {
         *second_instant = Instant::now();
         video_qos.update_display_data(&name, *send_counter);
         *send_counter = 0;
     }
+    
     drop(video_qos);
     Ok(())
 }

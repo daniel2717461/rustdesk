@@ -70,17 +70,17 @@ class DesktopSettingPage extends StatefulWidget {
         !bind.isDisableSettings() &&
         bind.mainGetBuildinOption(key: kOptionHideSecuritySetting) != 'Y')
       SettingsTabKey.safety,
-    if (!bind.isDisableSettings() &&
-        bind.mainGetBuildinOption(key: kOptionHideNetworkSetting) != 'Y')
-      SettingsTabKey.network,
+    // if (!bind.isDisableSettings() &&
+    //     bind.mainGetBuildinOption(key: kOptionHideNetworkSetting) != 'Y')
+    //   SettingsTabKey.network, //关闭网络设置页面
     if (!bind.isIncomingOnly()) SettingsTabKey.display,
     if (!isWeb && !bind.isIncomingOnly() && bind.pluginFeatureIsEnabled())
       SettingsTabKey.plugin,
     if (!bind.isDisableAccount()) SettingsTabKey.account,
     if (isWindows &&
         bind.mainGetBuildinOption(key: kOptionHideRemotePrinterSetting) != 'Y')
-      SettingsTabKey.printer,
-    SettingsTabKey.about,
+      // SettingsTabKey.printer, //关闭打印机设置页面
+    // SettingsTabKey.about, // 已关闭关于页面
   ];
 
   DesktopSettingPage({Key? key, required this.initialTabkey}) : super(key: key);
@@ -521,20 +521,20 @@ class _GeneralState extends State<_General> {
               isServer: false,
             ),
           ),
-        if (!isWeb && !bind.isCustomClient())
-          _OptionCheckBox(
-            context,
-            'Check for software update on startup',
-            kOptionEnableCheckUpdate,
-            isServer: false,
-          ),
-        if (showAutoUpdate)
-          _OptionCheckBox(
-            context,
-            'Auto update',
-            kOptionAllowAutoUpdate,
-            isServer: true,
-          ),
+        // if (!isWeb && !bind.isCustomClient())
+        //   _OptionCheckBox(
+        //     context,
+        //     'Check for software update on startup',
+        //     kOptionEnableCheckUpdate,
+        //     isServer: false,
+        //   ), // 已关闭启动时检查软件更新
+        // if (showAutoUpdate)
+        //   _OptionCheckBox(
+        //     context,
+        //     'Auto update',
+        //     kOptionAllowAutoUpdate,
+        //     isServer: true,
+        //   ), // 已关闭自动更新
         if (isWindows && !bind.isOutgoingOnly())
           _OptionCheckBox(
             context,
