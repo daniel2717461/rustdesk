@@ -5,12 +5,6 @@
 // 60FPS is commonly used in game, teamviewer 12 support this for video editing user.
 // 优化后支持240+FPS，提供极致流畅的远程控制体验
 
-// 高性能帧率控制参数
-const HIGH_PERF_FPS_THRESHOLD: u32 = 240; // 高性能模式帧率阈值
-const ULTRA_FPS_THRESHOLD: u32 = 480;     // 极限帧率模式阈值
-const MIN_LATENCY_FPS: u32 = 60;          // 最小延迟帧率
-const MAX_FRAME_DROP_COUNT: usize = 5;    // 最大连续丢帧数
-
 // how to capture with mouse cursor:
 // https://docs.microsoft.com/zh-cn/windows/win32/direct3ddxgi/desktop-dup-api?redirectedfrom=MSDN
 
@@ -66,6 +60,12 @@ use std::{
     ops::{Deref, DerefMut},
     time::{self, Duration, Instant},
 };
+
+// 高性能帧率控制参数
+const HIGH_PERF_FPS_THRESHOLD: u32 = 240; // 高性能模式帧率阈值
+const ULTRA_FPS_THRESHOLD: u32 = 480;     // 极限帧率模式阈值
+const MIN_LATENCY_FPS: u32 = 60;          // 最小延迟帧率
+const MAX_FRAME_DROP_COUNT: usize = 5;    // 最大连续丢帧数
 
 pub const OPTION_REFRESH: &'static str = "refresh";
 
@@ -649,8 +649,9 @@ fn run(vs: VideoService) -> ResultType<()> {
 
     #[cfg(target_os = "linux")]
     let mut would_block_count = 0u32;
-    let mut yuv = Vec::new();
-    let mut mid_data = Vec::new();
+    // 优化内存管理：预分配缓冲区，避免重复分配
+    let mut yuv = Vec::with_capacity(c.width * c.height * 3 / 2); // YUV420 格式预分配
+    let mut mid_data = Vec::with_capacity(c.width * c.height * 4); // RGBA 格式预分配
     let mut repeat_encode_counter = 0;
     let repeat_encode_max = 10;
     let mut encode_fail_counter = 0;
@@ -1324,56 +1325,62 @@ fn check_qos(
     second_instant: &mut Instant,
     name: &str,
 ) -> ResultType<()> {
-    // 使用快速锁定机制
-    let mut video_qos = VIDEO_QOS.lock().unwrap();
-    
-    // 计算高性能帧率 - 更频繁的QoS检查以支持高FPS
-    let spf_interval = if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
-        // 在高FPS模式下，更频繁地检查QoS
-        Duration::from_millis(50) // 每50ms检查一次
+    // 优化锁机制：使用try_lock避免阻塞，只在必要时使用阻塞锁
+    let video_qos = if let Ok(qos) = VIDEO_QOS.try_lock() {
+        Some(qos)
     } else {
-        video_qos.spf() // 标准间隔
+        // 如果无法快速获取锁，跳过本次检查，避免阻塞高FPS流程
+        None
     };
     
-    *spf = spf_interval;
-    
-    // 快速质量比检查
-    if *ratio != video_qos.ratio() {
-        *ratio = video_qos.ratio();
-        if encoder.support_changing_quality() {
-            allow_err!(encoder.set_quality(*ratio));
-            video_qos.store_bitrate(encoder.bitrate());
+    if let Some(mut video_qos) = video_qos {
+        // 计算高性能帧率 - 更频繁的QoS检查以支持高FPS
+        let spf_interval = if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
+            // 在高FPS模式下，更频繁地检查QoS
+            Duration::from_millis(50) // 每50ms检查一次
         } else {
-            // Now only vaapi doesn't support changing quality
-            if !video_qos.in_vbr_state() && !video_qos.latest_quality().is_custom() {
-                log::info!("switch to change quality");
-                bail!("SWITCH");
+            video_qos.spf() // 标准间隔
+        };
+        
+        *spf = spf_interval;
+        
+        // 快速质量比检查
+        if *ratio != video_qos.ratio() {
+            *ratio = video_qos.ratio();
+            if encoder.support_changing_quality() {
+                allow_err!(encoder.set_quality(*ratio));
+                video_qos.store_bitrate(encoder.bitrate());
+            } else {
+                // Now only vaapi doesn't support changing quality
+                if !video_qos.in_vbr_state() && !video_qos.latest_quality().is_custom() {
+                    log::info!("switch to change quality");
+                    bail!("SWITCH");
+                }
             }
         }
-    }
-    
-    // 快速记录状态检查
-    if client_record != video_qos.record() {
-        log::info!("switch due to record changed");
-        bail!("SWITCH");
-    }
-    
-    // 优化显示数据更新频率
-    let elapsed = second_instant.elapsed();
-    if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
-        // 在高FPS模式下，更频繁地更新显示数据
-        if elapsed > Duration::from_millis(500) {
+        
+        // 快速记录状态检查
+        if client_record != video_qos.record() {
+            log::info!("switch due to record changed");
+            bail!("SWITCH");
+        }
+        
+        // 优化显示数据更新频率
+        let elapsed = second_instant.elapsed();
+        if video_qos.fps() > HIGH_PERF_FPS_THRESHOLD {
+            // 在高FPS模式下，更频繁地更新显示数据
+            if elapsed > Duration::from_millis(500) {
+                *second_instant = Instant::now();
+                video_qos.update_display_data(&name, *send_counter);
+                *send_counter = 0;
+            }
+        } else if elapsed > Duration::from_secs(1) {
             *second_instant = Instant::now();
             video_qos.update_display_data(&name, *send_counter);
             *send_counter = 0;
         }
-    } else if elapsed > Duration::from_secs(1) {
-        *second_instant = Instant::now();
-        video_qos.update_display_data(&name, *send_counter);
-        *send_counter = 0;
     }
     
-    drop(video_qos);
     Ok(())
 }
 
